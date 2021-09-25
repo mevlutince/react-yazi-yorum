@@ -1,67 +1,86 @@
+import React, { useState, useEffect } from "react";
 import { api } from "../api";
-import React,{useState,useEffect} from "react";
-import { withRouter } from "react-router"; 
+import { withRouter,useParams,useHistory } from "react-router-dom";
 
 const YaziFormu = (props) => {
-//formu post işlemi yorumdan farklı bir şekilde yapıldı.burada form kullanmadık
-// bu forma hem yeni yazıEkle formundan veri gelecek hem de yaziDuzenle den
-    const [yazi,setYazi]=useState({title:"",content:""});
-    const [hata,setHata]=useState("");
+  const [yazi, setYazi] = useState({
+    title: "",
+    content: "",
+  });
+  const [hata, setHata] = useState("");
 
-    const onInputChange=(event)=>setYazi({...yazi,[event.target.name]:event.target.value});   
+  const {id}=useParams();
+  const history=useHistory();
+  const onInputChange = (event) =>
+    setYazi({ ...yazi, [event.target.name]: event.target.value });
 
-    const onFormSubmit=(event)=>{
-        event.preventDefault();
-        setHata("");
-      
-        if(props.yazi.title){ // bir yazıyı düzenledigimizde ife girecek 
-          api().put(`/posts/${props.match.params.id}`,yazi)
-          .then((response)=>{
-            console.log(response);
-            props.history.push(`/posts/${props.match.params.id}`);// veri güncellenfikten sonra geri gönderiliyor
-          }).catch((error)=>{
-            setHata("Başlık ve yazı içerigi alanları zorunludur");
-          })
-        }else{
-          api().post(`/posts`,yazi)
-          .then(response=>props.history.push('/'))
-          .catch(error=>{
-              setHata("Başlık ve yazı içerigi alanları zorunludur");
-          });
-        }
+  const onFormSubmit = (event) => {
+    event.preventDefault();
+    setHata("");
 
-       
-
+    if (props.yazi.title) {
+      api()
+        .put(`/posts/${id}`, yazi)  /*  props.match.params.id yerine sadece id kullanabiliriz*/
+        .then((response) => {
+          console.log(response);
+          history.push(`/posts/${id}`); /*  props.match.params.id yerine sadece id ve props.history.push("/"); yerine history.push("/"); kullanabiliriz*/
+        })
+        .catch((error) => {
+          setHata("Başlık ve yazı içeriği alanları zorunludur.");
+        });
+    } else {
+      api()
+        .post("/posts", yazi)
+        .then((response) => {
+          history.push("/"); // props.history.push("/"); yerine history.push("/"); kullanabiliriz
+        })
+        .catch((error) => {
+          setHata("Başlık ve yazı içeriği alanları zorunludur.");
+        });
     }
+  };
 
-    useEffect(() => { //yazi duzenle formundan bir veri gelitrse çalışacak
-      if(props.yazi.title && props.yazi.content) setYazi(props.yazi)
-    }, [props.yazi])
+  useEffect(() => {
+    if (props.yazi.title && props.yazi.content) setYazi(props.yazi);
+  }, [props.yazi]);
 
-    return (
-        <React.Fragment>
-       { 
-        hata &&  <div className="ui error message">
-            <div className="header">Action Forbiden</div>
-            <p>{hata}</p>
+  return (
+    <React.Fragment>
+      {hata && (
+        <div className="ui error message">
+          <div className="header">Hata</div>
+          <p>{hata}</p>
         </div>
-        }
+      )}
+      <div className="ui form">
+        <div className="field">
+          <label>Yazı Başlığı</label>
 
-    <div className="ui form">
-      <div className="field">
-        <label>Yazi Başlığı</label>
-       
-        <input type="text" value={yazi.title} name="title" onChange={onInputChange}/>
+          <input
+            value={yazi.title}
+            type="text"
+            name="title"
+            onChange={onInputChange}
+          />
+        </div>
+        <div className="field">
+          <label>Yazı İçeriği</label>
+          <textarea
+            value={yazi.content}
+            rows="3"
+            name="content"
+            onChange={onInputChange}
+          ></textarea>
+        </div>
+        <button className="ui primary button" onClick={onFormSubmit}>
+          Gönder
+        </button>
+        <button className="ui button">İptal Et</button>
       </div>
-      <div className="field">
-        <label>Yazı İçerigi</label>
-        <textarea type="text" rows="3" value={yazi.content} name="content" onChange={onInputChange}></textarea>
-      </div>
-      <button className="ui button blue" onClick={onFormSubmit}>Gönder</button>
-      <button className="ui button ">İptal Et</button>
-    </div>
     </React.Fragment>
   );
 };
 
-export default withRouter(YaziFormu); //YaziFormunda histoyi yakalayabilmek için ekledik
+// export default withRouter(YaziFormu); hookRouter kullandıgımız için withRouter kullanmamıza gerek yok
+
+export default YaziFormu;
